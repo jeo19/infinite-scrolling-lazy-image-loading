@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useCallback, useRef } from 'react';
 import './index.css';
 
 function App() {
@@ -30,6 +30,7 @@ function App() {
     });
     useEffect(() => {
         imgDisPatch({ type: 'FETCHING_IMAGES', fetching: true });
+        console.log(pager.page);
         fetch('https://picsum.photos/v2/list?page=${pager.page}&limit=10')
             .then((data) => data.json())
             .then((images) => {
@@ -42,6 +43,25 @@ function App() {
                 return e;
             });
     }, [imgDisPatch, pager.page]);
+    //implement infinite scrolling with intersection observer
+    let bottomBoundaryRef = useRef(null);
+    const scrollObserver = useCallback(
+        (node) => {
+            new IntersectionObserver((entries) => {
+                entries.forEach((en) => {
+                    if (en.intersectionRatio > 0) {
+                        pagerDispatch({ type: 'ADVANCE_PAGE' });
+                    }
+                });
+            }).observe(node);
+        },
+        [pagerDispatch],
+    );
+    useEffect(() => {
+        if (bottomBoundaryRef.current) {
+            scrollObserver(bottomBoundaryRef.current);
+        }
+    }, [scrollObserver, bottomBoundaryRef]);
     return (
         <div className="">
             <nav className="navbar bg-light">
@@ -74,6 +94,16 @@ function App() {
                     })}
                 </div>
             </div>
+            {imgData.fetching && (
+                <div className="text-center bg-secondary m-auto p-3">
+                    <p className="m-0 text-white">Getting images</p>
+                </div>
+            )}
+            <div
+                id="page-bottom-boundary"
+                style={{ border: '1px solid red' }}
+                ref={bottomBoundaryRef}
+            ></div>
         </div>
     );
 }
