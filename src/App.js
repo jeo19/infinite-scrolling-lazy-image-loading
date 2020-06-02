@@ -12,13 +12,25 @@ function App() {
                 return state;
         }
     };
+    const pageReducer = (state, action) => {
+        switch (action.type) {
+            case 'ADVANCE_PAGE':
+                return {
+                    ...state,
+                    page: state.page + 1,
+                };
+            default:
+                return state;
+        }
+    };
+    const [pager, pagerDispatch] = useReducer(pageReducer, { page: 0 });
     const [imgData, imgDisPatch] = useReducer(imgReducer, {
         images: [],
         fetching: true,
     });
     useEffect(() => {
         imgDisPatch({ type: 'FETCHING_IMAGES', fetching: true });
-        fetch('https://picsum.photos/v2/list?page=0&limit=10')
+        fetch('https://picsum.photos/v2/list?page=${pager.page}&limit=10')
             .then((data) => data.json())
             .then((images) => {
                 imgDisPatch({ type: 'STACK_IMAGES', images });
@@ -29,7 +41,7 @@ function App() {
                 imgDisPatch({ type: 'FETCHING_IMAGES', fetching: false });
                 return e;
             });
-    }, [imgDisPatch]);
+    }, [imgDisPatch, pager.page]);
     return (
         <div className="">
             <nav className="navbar bg-light">
